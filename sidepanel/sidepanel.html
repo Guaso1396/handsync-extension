@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HandSync</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header>
+    <h1>HandSync</h1>
+    <p>Señas y voz para tus videollamadas</p>
+  </header>
+
+  <div id="estado" role="status" aria-live="polite" hidden></div>
+  <button id="btn-permisos" class="secundario" hidden aria-label="Abrir la página para dar permisos de cámara y micrófono">Dar permisos</button>
+
+  <main>
+    <section aria-labelledby="t-senas">
+      <h2 id="t-senas">Señas → Voz</h2>
+      <div class="fila">
+        <button id="btn-camara" aria-label="Iniciar cámara">Iniciar cámara</button>
+      </div>
+      <div id="video" class="video" aria-label="Vista de la cámara"></div>
+
+      <div class="deteccion">
+        <div id="letra" class="letra" aria-label="Letra detectada" aria-live="off">—</div>
+        <div class="barras">
+          <label for="confianza">Confianza</label>
+          <progress id="confianza" max="100" value="0"></progress>
+          <label for="estabilidad">Estabilidad</label>
+          <progress id="estabilidad" max="100" value="0"></progress>
+        </div>
+      </div>
+
+      <span id="l-texto" class="etiqueta">Texto armado</span>
+      <div id="texto" class="texto" tabindex="0" role="textbox" aria-readonly="true" aria-labelledby="l-texto" aria-live="polite"></div>
+
+      <div class="fila">
+        <button id="btn-espacio" class="secundario" aria-label="Agregar espacio">␣ Espacio</button>
+        <button id="btn-borrar" class="secundario" aria-label="Borrar la última letra">⌫ Borrar</button>
+        <button id="btn-limpiar" class="secundario" aria-label="Limpiar todo el texto">Limpiar</button>
+      </div>
+      <div class="fila">
+        <button id="btn-hablar" aria-label="Leer el texto en voz alta">🔊 Hablar</button>
+        <button id="btn-copiar" aria-label="Copiar el texto al portapapeles">📋 Copiar</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="t-ensenar">
+      <h2 id="t-ensenar">Enseñar señas</h2>
+      <p class="ayuda">Enciende la cámara, elige una letra, haz la seña y pulsa Capturar.</p>
+      <label for="sel-letra" class="etiqueta">Letra</label>
+      <select id="sel-letra" aria-label="Letra que vas a enseñar"></select>
+      <p id="cuenta-muestras" class="ayuda" aria-live="polite"></p>
+      <div class="fila">
+        <button id="btn-capturar" aria-label="Capturar muestras de la letra elegida">Capturar</button>
+        <button id="btn-borrar-muestras" class="secundario" aria-label="Borrar las muestras de la letra elegida">Borrar muestras</button>
+      </div>
+      <button id="btn-importar" class="secundario" aria-label="Abrir la página para importar fotos de señas">Importar fotos (carpeta)</button>
+    </section>
+
+    <section aria-labelledby="t-voz">
+      <h2 id="t-voz">Voz → Señas</h2>
+      <div class="fila">
+        <button id="btn-escuchar" aria-label="Escuchar con el micrófono">🎤 Escuchar</button>
+        <button id="btn-llamada" aria-label="Escuchar el audio de la llamada y mostrar las señas">🔊 Escuchar la llamada</button>
+      </div>
+      <label for="sel-calidad" class="etiqueta">Calidad de la voz local</label>
+      <select id="sel-calidad" aria-label="Calidad del reconocimiento de voz local">
+        <option value="rapida">Rápida (menos precisa)</option>
+        <option value="precisa">Precisa (más lenta)</option>
+      </select>
+      <p class="ayuda">Para la llamada: elige la pestaña de Meet y marca "Compartir audio de la pestaña".</p>
+      <p id="transcripcion" class="transcripcion" aria-live="polite">La transcripción aparecerá aquí.</p>
+      <div id="tarjetas" class="tarjetas" aria-label="Señas de cada letra"></div>
+
+      <label for="respaldo" class="etiqueta">O escribe aquí (respaldo)</label>
+      <input id="respaldo" type="text" autocomplete="off" placeholder="Escribe una palabra">
+    </section>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/muestras.js"></script>
+  <script src="../js/voz_local.js"></script>
+  <script src="../js/voz.js"></script>
+  <script src="../js/senas.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

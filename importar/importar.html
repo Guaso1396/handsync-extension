@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HandSync · Importar fotos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #FFF7ED; color: #166534; display: flex; justify-content: center; padding: 40px 16px; margin: 0; }
+    main { max-width: 560px; width: 100%; background: #F0FDF4; border: 2px solid #15803D; border-radius: 16px; padding: 28px; }
+    h1 { margin-top: 0; color: #EA580C; }
+    button, input[type=file]::file-selector-button { background: #166534; color: #fff; border: 0; border-radius: 10px; padding: 10px 16px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #EA580C; outline-offset: 3px; }
+    progress { width: 100%; height: 16px; accent-color: #15803D; }
+    #registro { white-space: pre-wrap; font-size: 0.9rem; margin-top: 12px; }
+    .error { color: #9A3412; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Importar fotos de señas</h1>
+    <p>Elige la carpeta que tiene una subcarpeta por letra (<code>A</code>, <code>B</code>, <code>C</code>…).
+       HandSync detecta la mano en cada foto y guarda sus puntos. Las fotos <strong>no salen de tu computador</strong>.
+       Esto <strong>reemplaza</strong> las muestras de las letras importadas. Se omiten J, Z, Ñ (tienen movimiento) y la carpeta NADA.</p>
+    <label for="carpeta"><strong>Carpeta de fotos</strong></label><br>
+    <input id="carpeta" type="file" webkitdirectory multiple aria-label="Elegir la carpeta de fotos"><br><br>
+    <button id="btn-importar" aria-label="Empezar a importar las fotos">Importar</button>
+    <p><progress id="avance" value="0" max="1" aria-label="Avance de la importación"></progress></p>
+    <div id="registro" role="status" aria-live="polite"></div>
+  </main>
+  <script src="../js/config.js"></script>
+  <script src="../js/muestras.js"></script>
+  <script src="../js/senas.js"></script>
+  <script src="importar.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+/* Estilos del panel lateral (~360 px). Paleta naranja–verde. */
+:root {
+  --naranja: #EA580C;
+  --verde-osc: #166534;
+  --verde: #15803D;
+  --fondo-n: #FFF7ED;
+  --fondo-v: #F0FDF4;
+  --error: #9A3412;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; padding: 12px;
+  font-family: system-ui, sans-serif; font-size: 15px;
+  background: var(--fondo-n); color: var(--verde-osc);
+  min-width: 0; overflow-x: hidden;
+}
+
+header { text-align: center; margin-bottom: 8px; }
+h1 { margin: 0; color: var(--naranja); font-size: 1.6rem; }
+header p { margin: 2px 0 0; }
+h2 { margin: 0 0 8px; font-size: 1.15rem; border-bottom: 3px solid var(--naranja); padding-bottom: 4px; }
+
+section {
+  background: var(--fondo-v); border: 2px solid var(--verde);
+  border-radius: 14px; padding: 12px; margin-bottom: 14px;
+}
+
+button {
+  background: var(--verde-osc); color: #fff; border: 0; border-radius: 10px;
+  padding: 10px 12px; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1;
+}
+button.secundario { background: #fff; color: var(--verde-osc); border: 2px solid var(--verde); }
+button.activo { background: var(--naranja); }
+button:hover { filter: brightness(1.1); }
+button:focus-visible, input:focus-visible, .texto:focus-visible {
+  outline: 3px solid var(--naranja); outline-offset: 2px;
+}
+
+.fila { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+
+.video { width: 100%; min-height: 40px; display: flex; justify-content: center; }
+.video canvas { max-width: 100%; height: auto; border-radius: 10px; border: 2px solid var(--verde); }
+
+.deteccion { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+.letra {
+  width: 84px; height: 84px; flex: none; display: grid; place-items: center;
+  font-size: 3.2rem; font-weight: 800; color: var(--naranja);
+  background: #fff; border: 3px solid var(--naranja); border-radius: 14px;
+}
+.barras { flex: 1; min-width: 0; }
+.barras label { font-size: 0.85rem; font-weight: 600; }
+progress { width: 100%; height: 14px; accent-color: var(--verde); }
+
+.etiqueta { display: block; font-weight: 700; margin: 8px 0 4px; }
+.texto {
+  min-height: 48px; padding: 8px; background: #fff; border: 2px solid var(--verde);
+  border-radius: 10px; font-size: 1.3rem; font-weight: 700; letter-spacing: 2px;
+  word-break: break-all; white-space: pre-wrap;
+}
+
+.transcripcion { min-height: 24px; font-style: italic; margin: 8px 0; }
+
+.tarjetas { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.tarjeta {
+  width: 64px; text-align: center; background: #fff; border: 2px solid var(--verde);
+  border-radius: 8px; padding: 4px; font-weight: 800; font-size: 0.95rem;
+}
+.tarjeta img { width: 100%; height: 52px; object-fit: contain; display: block; }
+.tarjeta .sin-sena {
+  height: 52px; display: grid; place-items: center; font-size: 0.65rem;
+  font-weight: 600; color: var(--error); background: var(--fondo-n); border-radius: 4px;
+}
+.separador { width: 24px; }
+
+input[type="text"] {
+  width: 100%; padding: 10px; font-size: 1rem; border: 2px solid var(--verde);
+  border-radius: 10px; color: var(--verde-osc);
+}
+
+#estado { padding: 10px; border-radius: 10px; margin-bottom: 10px; font-weight: 600; }
+#estado.info { background: #fff; border: 2px solid var(--verde); }
+#estado.error { background: #FFEDD5; border: 2px solid var(--error); color: var(--error); }
+#btn-permisos { width: 100%; margin-bottom: 10px; }
+
+/* Cámara en espejo (solo visual) y sección Enseñar */
+.video video { max-width: 100%; height: auto; border-radius: 10px; border: 2px solid var(--verde); transform: scaleX(-1); }
+.ayuda { margin: 4px 0; font-size: 0.9rem; }
+select { width: 100%; padding: 10px; font-size: 1rem; border: 2px solid var(--verde); border-radius: 10px; color: var(--verde-osc); background: #fff; }
+#btn-importar { width: 100%; }
