@@ -1,5 +1,15 @@
 # HandSync — Extensión de Chrome/Brave (v1)
 
+## ⬇️ [Descargar extensión](https://github.com/Guaso1396/handsync-extension/archive/refs/heads/main.zip)
+
+Un clic en el enlace descarga la última versión (`handsync-extension-main.zip`). Para instalarla:
+1. Descomprime el `.zip` en una carpeta fija (por ejemplo `Documentos\HandSync`). No la borres ni la muevas después.
+2. Abre `brave://extensions` (o `chrome://extensions`) y activa **Modo de desarrollador**.
+3. Pulsa **Cargar descomprimida** y elige la carpeta que contiene `manifest.json` (dentro de la carpeta descomprimida `handsync-extension-main`).
+4. En la pestaña que se abre, **permite cámara y micrófono**.
+5. Abre HandSync con su ícono (si no aparece: 🧩 → 📌). Las letras y señas incluidas se cargan solas la primera vez.
+
+
 Fundamentos de Investigación para la Innovación · Docente: Luis Miguel Gonzalez Giraldo
 Grupo 2: Fabian Andres Valdez · Kevin Mauricio Roman · Diana Alejandra Botero
 
