@@ -155,6 +155,7 @@ async function alternarCamara() {
     btn.classList.remove('activo');
     pintarEstadoCamara(false);
     pintarPrediccion({ letra: '—', prob: 0, progreso: 0 });
+    chrome.storage.local.set({ hs_camara_encendida: false }); // el usuario la apagó: no se reabre sola
     return;
   }
   mostrarEstado('Cargando modelo y cámara…');
@@ -169,7 +170,12 @@ async function alternarCamara() {
         if (capaEsqueleto) HSCuerpo.dibujar(capaEsqueleto, lec);
         $('chip-mano').hidden = !(lec && lec.manos && lec.manos.length);
       },
-      onMov: (activo) => { $('mov').hidden = !activo; }
+      onMov: (activo) => { $('mov').hidden = !activo; },
+      onCamara: (estado, e) => {
+        if (estado === 'reconectando') { pintarEstadoCamara(false); mostrarEstado('La cámara se interrumpió. Reconectando…'); }
+        else if (estado === 'ocupada') mostrarEstado('La cámara está ocupada' + (e && e.name === 'NotAllowedError' ? ' o sin permiso' : ' por otra aplicación (¿WhatsApp, Zoom, Meet?)') + '. Reintentando…', 'error');
+        else if (estado === 'activa') { pintarEstadoCamara(true); mostrarEstado(''); }
+      }
     });
     ponerCapa();
     $('chk-cuerpo').disabled = true;
@@ -181,6 +187,7 @@ async function alternarCamara() {
     pintarEstadoCamara(true);
     mostrarEstado('');
     ofrecerPermisos(false);
+    chrome.storage.local.set({ hs_camara_encendida: true }); // se vuelve a encender sola al abrir el panel
   } catch (e) {
     mostrarEstado(mensajeErrorCamara(e), 'error');
   }
@@ -529,6 +536,9 @@ async function iniciar() {
     mostrarEstado('Faltan permisos de cámara o micrófono. Pulsa "Dar permisos".', 'error');
     ofrecerPermisos(true);
   }
+  // Si la cámara estaba encendida la última vez, se vuelve a encender al abrir el panel.
+  const { hs_camara_encendida: encendida } = await chrome.storage.local.get('hs_camara_encendida');
+  if (encendida && permisos.camara === 'granted' && !camaraActiva) alternarCamara();
 }
 
 iniciar();
