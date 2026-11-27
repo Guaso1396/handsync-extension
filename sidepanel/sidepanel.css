@@ -282,3 +282,12 @@ select { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Estado y volumen de la voz, junto a los botones de Voz → Señas */
+.voz-estado { margin: 8px 0 0; padding: 8px 10px; border-radius: var(--rb); font-size: 13px; font-weight: 600; background: var(--card); border: 1px solid var(--bd2); color: var(--tx); }
+.voz-estado.error { background: var(--err-bg); border-color: var(--err-bd); color: var(--err-tx); }
+.voz-nivel { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
+.voz-nivel[hidden] { display: none; }
+.voz-nivel-barra { flex: 1; height: 10px; border-radius: 5px; background: var(--bd2); overflow: hidden; }
+.voz-nivel-barra i { display: block; height: 100%; width: 0; background: #2e9e5b; transition: width 80ms linear; }
+.voz-nivel-barra i.voz { background: #1a7f45; }

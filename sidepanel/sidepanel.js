@@ -426,6 +426,25 @@ function mensajeErrorVoz(codigo) {
   return 'Error de reconocimiento de voz: ' + codigo;
 }
 
+// Estado de la voz junto a sus botones (el cuadro #estado de arriba no se ve si el panel está abajo).
+function estadoVoz(mensaje, tipo = 'info') {
+  mostrarEstado(mensaje, tipo);
+  const p = $('voz-estado');
+  p.hidden = !mensaje;
+  p.textContent = mensaje;
+  p.className = 'voz-estado' + (tipo === 'error' ? ' error' : '');
+}
+
+// Medidor del volumen que llega (micrófono o llamada). nivel: RMS 0..1; null oculta el medidor.
+function nivelVoz(nivel, hayVoz) {
+  const caja = $('voz-nivel');
+  if (nivel === null) { caja.hidden = true; return; }
+  caja.hidden = false;
+  const relleno = $('voz-nivel-relleno');
+  relleno.style.width = Math.min(100, Math.round(nivel * 800)) + '%';
+  relleno.classList.toggle('voz', !!hayVoz);
+}
+
 // Inicia o detiene la escucha. origen: 'microfono' (tu voz) o 'pestana' (audio de la llamada).
 function alternarEscucha(origen) {
   const llamada = origen === 'pestana';
@@ -437,13 +456,15 @@ function alternarEscucha(origen) {
   btn.textContent = 'Detener';
   btn.classList.add('activo');
   otro.disabled = true;
-  mostrarEstado('');
+  estadoVoz(llamada ? 'Elige qué compartir en la ventana que se abre…' : 'Iniciando…');
   const callbacks = {
     onParcial: (t) => { $('transcripcion').textContent = t; pintarTarjetas(t); },
     onFinal: (t) => { $('transcripcion').textContent = t; pintarTarjetas(t); },
-    onEstado: (mensaje) => mostrarEstado(mensaje),
-    onError: (codigo) => mostrarEstado(mensajeErrorVoz(codigo), 'error'),
+    onEstado: (mensaje) => estadoVoz(mensaje),
+    onError: (codigo) => estadoVoz(mensajeErrorVoz(codigo), 'error'),
+    onNivel: (nivel, hayVoz) => nivelVoz(nivel, hayVoz),
     onFin: () => {
+      nivelVoz(null);
       escuchando = false;
       btn.textContent = textoInicial;
       btn.classList.remove('activo');

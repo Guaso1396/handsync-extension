@@ -19,6 +19,7 @@ const HSVozLocal = (() => {
   let previo = [], frase = [];
   let hablaSeg = 0, silencioSeg = 0;
   let cola = [], ocupado = false, temporizador = null;
+  let origenActual = 'microfono', segundosSinVoz = 0, avisoSilencio = false, ultimoNivel = 0;
 
   // Crea el worker y carga el modelo (solo si hace falta). Devuelve una promesa.
   function cargarModelo() {
@@ -137,7 +138,21 @@ const HSVozLocal = (() => {
   function procesarBloque(ev) {
     const bloque = remuestrear(ev.inputBuffer.getChannelData(0), ctx.sampleRate);
     const seg = bloque.length / TASA;
-    if (volumen(bloque) >= HS_CONFIG.VAD_UMBRAL) {
+    const vol = volumen(bloque);
+    const hayVoz = vol >= HS_CONFIG.VAD_UMBRAL;
+    const ahora = performance.now();
+    if (callbacks && callbacks.onNivel && ahora - ultimoNivel > 100) { ultimoNivel = ahora; callbacks.onNivel(vol, hayVoz); }
+    segundosSinVoz = hayVoz ? 0 : segundosSinVoz + seg;
+    if (!avisoSilencio && segundosSinVoz >= 10 && callbacks) {
+      avisoSilencio = true; // se avisa una sola vez por escucha
+      callbacks.onEstado(origenActual === 'pestana'
+        ? 'No llega sonido de la llamada. Revisa que marcaste "Compartir audio". Si la llamada está en una aplicación (WhatsApp o Zoom de escritorio), detén y elige "Pantalla completa" con "Compartir audio del sistema".'
+        : 'No llega sonido del micrófono. Revisa que el micrófono correcto esté activo en Windows y que Brave tenga permiso (botón "Dar permisos").');
+    } else if (avisoSilencio && hayVoz && callbacks) {
+      avisoSilencio = false; segundosSinVoz = -1e9; // ya llegó sonido: no se vuelve a avisar
+      callbacks.onEstado('Escuchando…');
+    }
+    if (hayVoz) {
       if (!frase.length) frase = previo.splice(0); // incluye medio segundo previo
       frase.push(bloque);
       hablaSeg += seg;
@@ -170,7 +185,9 @@ const HSVozLocal = (() => {
     }
     const f = await navigator.mediaDevices.getDisplayMedia({
       video: true,
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      systemAudio: 'include',      // ofrece "Compartir audio del sistema" al elegir pantalla completa (Windows)
+      selfBrowserSurface: 'exclude' // no ofrece la pestaña del propio panel
     });
     if (!f.getAudioTracks().length) {
       f.getTracks().forEach((p) => p.stop());
@@ -233,6 +250,7 @@ const HSVozLocal = (() => {
     fuente.connect(nodo);
     nodo.connect(ctx.destination); // no suena: no se copia audio a la salida
     previo = []; frase = []; cola = []; hablaSeg = 0; silencioSeg = 0;
+    origenActual = origen; segundosSinVoz = 0; avisoSilencio = false;
     activo = true;
     cb.onEstado('Escuchando… (pulsa Detener cuando termines)');
   }

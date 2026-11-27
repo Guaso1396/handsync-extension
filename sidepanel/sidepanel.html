@@ -132,7 +132,12 @@
           <option value="rapida">Rápida (menos precisa)</option>
           <option value="precisa">Precisa (más lenta)</option>
         </select>
-        <p class="ayuda">Para la llamada: elige la pestaña de Meet y marca "Compartir audio de la pestaña".</p>
+        <p id="voz-estado" class="voz-estado" role="status" aria-live="polite" hidden></p>
+        <div id="voz-nivel" class="voz-nivel" hidden aria-label="Volumen del audio que llega">
+          <span class="voz-nivel-txt">Sonido que llega:</span>
+          <span class="voz-nivel-barra"><i id="voz-nivel-relleno"></i></span>
+        </div>
+        <p class="ayuda">Para la llamada: elige la pestaña de Meet y marca "Compartir audio de la pestaña". Si la llamada está en una aplicación (WhatsApp o Zoom de escritorio), elige "Pantalla completa" y marca "Compartir audio del sistema".</p>
         <p id="transcripcion" class="transcripcion" aria-live="polite">La transcripción aparecerá aquí.</p>
         <div id="tarjetas" class="tarjetas" aria-label="Señas de cada letra"></div>
 

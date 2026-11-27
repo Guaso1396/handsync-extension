@@ -39,6 +39,17 @@ const HSVoz = (() => {
     r.lang = HS_CONFIG.IDIOMAS_VOZ[indiceIdioma];
     r.interimResults = true;
     r.continuous = true;
+    // Algunos navegadores traen el reconocedor de Google pero nunca arranca (ni da error):
+    // si no empieza a recibir audio en 4 s, se usa el reconocedor local.
+    let arranco = false;
+    r.onaudiostart = () => { arranco = true; };
+    const vigia = setTimeout(() => {
+      if (arranco || reconocedor !== r || parar) return;
+      console.warn('HandSync: el reconocimiento de Google no arrancó, se usa el reconocedor local');
+      r.onend = null; r.onerror = null;
+      try { r.abort(); } catch (e) { /* ya estaba detenido */ }
+      escucharLocal(callbacks);
+    }, 4000);
 
     r.onresult = (ev) => {
       let parcial = '';
@@ -50,6 +61,7 @@ const HSVoz = (() => {
       if (parcial) callbacks.onParcial(parcial);
     };
     r.onerror = (ev) => {
+      clearTimeout(vigia);
       const siguiente = indiceIdioma + 1;
       if (ev.error === 'language-not-supported' && siguiente < HS_CONFIG.IDIOMAS_VOZ.length) {
         r.onend = null;
