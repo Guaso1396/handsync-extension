@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>HandSync</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="cabecera">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+      </span>
+      <div>
+        <h1>HandSync</h1>
+        <p>Señas y voz para tus videollamadas</p>
+      </div>
+    </div>
+    <span class="pildora" title="Todo se procesa en tu equipo: el video y el audio no salen de él.">
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Local
+    </span>
+  </header>
+
+  <div id="estado" role="status" aria-live="polite" hidden></div>
+  <button id="btn-permisos" class="secundario" hidden aria-label="Abrir la página para dar permisos de cámara y micrófono">Dar permisos</button>
+
+  <nav class="pestanas" role="tablist" aria-label="Secciones de HandSync">
+    <button type="button" role="tab" id="tab-senas" class="pestana" aria-selected="true" data-objetivo="sec-senas">Señas → Voz</button>
+    <button type="button" role="tab" id="tab-ensenar" class="pestana" aria-selected="false" tabindex="-1" data-objetivo="sec-ensenar sec-mov">Enseñar</button>
+    <button type="button" role="tab" id="tab-voz" class="pestana" aria-selected="false" tabindex="-1" data-objetivo="sec-voz">Voz → Señas</button>
+  </nav>
+
+  <main>
+    <section id="sec-senas" class="tarjeta-sec" aria-labelledby="t-senas">
+      <div class="sec-cabeza">
+        <h2 id="t-senas">Señas <span class="flecha">→</span> Voz</h2>
+        <span id="estado-camara" class="estado-cam" aria-live="polite"><i aria-hidden="true"></i><span>Cámara apagada</span></span>
+      </div>
+
+      <div class="cam">
+        <div id="video" class="video" aria-label="Vista de la cámara"></div>
+        <div class="cam-vacia" aria-hidden="true">
+          <svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMax slice">
+            <circle cx="160" cy="78" r="38"/>
+            <path d="M72 200c6-48 44-76 88-76s82 28 88 76z"/>
+          </svg>
+        </div>
+        <span id="chip-mano" class="chip" hidden>Mano detectada</span>
+      </div>
+
+      <button id="btn-camara" class="ancho ico ico-camara" aria-label="Iniciar cámara">Iniciar cámara</button>
+
+      <div class="fila opciones">
+        <label><input type="checkbox" id="chk-cuerpo" checked> Usar cuerpo</label>
+        <label><input type="checkbox" id="chk-cara" checked> Usar cara</label>
+      </div>
+      <p class="ayuda">Cuerpo y cara se cambian con la cámara apagada. Si va lento, desactívalos.</p>
+      <p id="mov" class="ayuda aviso-mov" aria-live="polite" hidden>● Movimiento detectado…</p>
+
+      <div class="deteccion">
+        <div id="letra" class="letra" aria-label="Letra detectada" aria-live="off">—</div>
+        <div class="barras">
+          <div class="medidor">
+            <div class="medidor-cab"><label for="confianza">Confianza</label><b id="pct-confianza">0 %</b></div>
+            <progress id="confianza" max="100" value="0"></progress>
+          </div>
+          <div class="medidor">
+            <div class="medidor-cab"><label for="estabilidad">Estabilidad</label><b id="pct-estabilidad">0 %</b></div>
+            <progress id="estabilidad" class="p2" max="100" value="0"></progress>
+          </div>
+        </div>
+      </div>
+
+      <span id="l-texto" class="etiqueta">Texto armado</span>
+      <div id="texto" class="texto" tabindex="0" role="textbox" aria-readonly="true" aria-labelledby="l-texto" aria-live="polite"></div>
+
+      <div class="fila tres">
+        <button id="btn-espacio" class="secundario ico ico-espacio" aria-label="Agregar espacio">Espacio</button>
+        <button id="btn-borrar" class="secundario ico ico-retroceso" aria-label="Borrar la última letra">Borrar</button>
+        <button id="btn-limpiar" class="secundario ico ico-papelera" aria-label="Limpiar todo el texto">Limpiar</button>
+      </div>
+      <div class="fila dos">
+        <button id="btn-hablar" class="ico ico-altavoz" aria-label="Leer el texto en voz alta">Hablar</button>
+        <button id="btn-copiar" class="ico ico-copiar" aria-label="Copiar el texto al portapapeles">Copiar</button>
+      </div>
+      <div id="sena-palabra" class="sena-palabra" hidden aria-live="polite"></div>
+    </section>
+
+    <details id="sec-ensenar" class="tarjeta-sec plegable">
+      <summary><h2 id="t-ensenar">Enseñar señas</h2><span class="chevron" aria-hidden="true"></span></summary>
+      <div class="contenido">
+        <p class="ayuda">Enciende la cámara, elige una letra, haz la seña y pulsa Capturar.</p>
+        <label for="sel-letra" class="etiqueta">Letra</label>
+        <select id="sel-letra" aria-label="Letra que vas a enseñar"></select>
+        <p id="cuenta-muestras" class="ayuda" aria-live="polite"></p>
+        <div class="fila dos">
+          <button id="btn-capturar" class="ico ico-captura" aria-label="Capturar muestras de la letra elegida">Capturar</button>
+          <button id="btn-borrar-muestras" class="secundario" aria-label="Borrar las muestras de la letra elegida">Borrar muestras</button>
+        </div>
+        <button id="btn-importar" class="secundario ancho ico ico-carpeta" aria-label="Abrir la página para importar fotos de señas">Importar fotos (carpeta)</button>
+      </div>
+    </details>
+
+    <details id="sec-mov" class="tarjeta-sec plegable">
+      <summary><h2 id="t-mov">Señas con movimiento y palabras</h2><span class="chevron" aria-hidden="true"></span></summary>
+      <div class="contenido">
+        <p class="ayuda">Solo para palabras (HOLA, GRACIAS…). Las letras se enseñan como foto en "Enseñar señas". Enciende la cámara, escribe el nombre, pulsa Grabar toma y haz la seña con calma. Repite 3 a 5 veces. Usa cuerpo y cara igual que al reconocer.</p>
+        <label for="mov-etiqueta" class="etiqueta">Nombre de la seña</label>
+        <input id="mov-etiqueta" type="text" list="mov-sugerencias" autocomplete="off" placeholder="Ej: HOLA, GRACIAS">
+        <datalist id="mov-sugerencias"></datalist>
+        <div class="fila">
+          <button id="btn-grabar" class="ancho ico ico-grabar" aria-label="Grabar una toma de la seña">Grabar toma</button>
+        </div>
+        <p id="mov-estado" class="ayuda" aria-live="polite"></p>
+        <ul id="mov-lista" class="lista-mov" aria-label="Señas con movimiento guardadas"></ul>
+        <button id="btn-importar-videos" class="secundario ancho ico ico-carpeta" aria-label="Abrir la página para importar videos de señas">Importar videos de señas</button>
+      </div>
+    </details>
+
+    <details id="sec-voz" class="tarjeta-sec plegable">
+      <summary><h2 id="t-voz">Voz <span class="flecha">→</span> Señas</h2><span class="chevron" aria-hidden="true"></span></summary>
+      <div class="contenido">
+        <div class="fila dos">
+          <button id="btn-escuchar" class="ico ico-micro" aria-label="Escuchar con el micrófono">Escuchar</button>
+          <button id="btn-llamada" class="secundario ico ico-altavoz" aria-label="Escuchar el audio de la llamada y mostrar las señas">Escuchar la llamada</button>
+        </div>
+        <label for="sel-calidad" class="etiqueta">Calidad de la voz local</label>
+        <select id="sel-calidad" aria-label="Calidad del reconocimiento de voz local">
+          <option value="rapida">Rápida (menos precisa)</option>
+          <option value="precisa">Precisa (más lenta)</option>
+        </select>
+        <p id="voz-estado" class="voz-estado" role="status" aria-live="polite" hidden></p>
+        <div id="voz-nivel" class="voz-nivel" hidden aria-label="Volumen del audio que llega">
+          <span class="voz-nivel-txt">Sonido que llega:</span>
+          <span class="voz-nivel-barra"><i id="voz-nivel-relleno"></i></span>
+        </div>
+        <p class="ayuda">Para la llamada: elige la pestaña de Meet y marca "Compartir audio de la pestaña". Si la llamada está en una aplicación (WhatsApp o Zoom de escritorio), elige "Pantalla completa" y marca "Compartir audio del sistema".</p>
+        <p id="transcripcion" class="transcripcion" aria-live="polite">La transcripción aparecerá aquí.</p>
+        <div id="tarjetas" class="tarjetas" aria-label="Señas de cada letra"></div>
+
+        <label for="respaldo" class="etiqueta">O escribe aquí (respaldo)</label>
+        <input id="respaldo" type="text" autocomplete="off" placeholder="Escribe una palabra">
+      </div>
+    </details>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/muestras.js"></script>
+  <script src="../js/voz_local.js"></script>
+  <script src="../js/voz.js"></script>
+  <script src="../js/secuencias.js"></script>
+  <script src="../js/biblioteca.js"></script>
+  <script src="../js/datos_iniciales.js"></script>
+  <script src="../js/cuerpo.js"></script>
+  <script src="../js/senas.js"></script>
+  <script src="sidepanel.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
