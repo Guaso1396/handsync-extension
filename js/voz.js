@@ -32,7 +32,8 @@ const HSVoz = (() => {
   // Usa el reconocimiento de Google (es-CO, con respaldo es-ES) y lo reinicia solo si se corta.
   // Si el navegador no lo trae o lo bloquea (Brave, Firefox…), usa el reconocedor local.
   function iniciarGoogle(callbacks, indiceIdioma) {
-    if (HS_CONFIG.MOTOR_VOZ === 'local' || !('webkitSpeechRecognition' in window)) return escucharLocal(callbacks);
+    // Brave (navigator.brave) trae webkitSpeechRecognition pero no lo deja funcionar: se usa el local de una vez.
+    if (HS_CONFIG.MOTOR_VOZ === 'local' || navigator.brave || !('webkitSpeechRecognition' in window)) return escucharLocal(callbacks);
     const r = new webkitSpeechRecognition();
     reconocedor = r;
     r.lang = HS_CONFIG.IDIOMAS_VOZ[indiceIdioma];
@@ -49,18 +50,21 @@ const HSVoz = (() => {
       if (parcial) callbacks.onParcial(parcial);
     };
     r.onerror = (ev) => {
-      if (ev.error === 'network' || ev.error === 'service-not-allowed') {
-        r.onend = null;
-        return escucharLocal(callbacks);
-      }
       const siguiente = indiceIdioma + 1;
       if (ev.error === 'language-not-supported' && siguiente < HS_CONFIG.IDIOMAS_VOZ.length) {
         r.onend = null;
         return iniciarGoogle(callbacks, siguiente);
       }
       if (ev.error === 'no-speech' || ev.error === 'aborted') return; // onend lo reinicia
-      parar = true;
-      callbacks.onError(ev.error);
+      if (ev.error === 'not-allowed') { // sin permiso de micrófono: el local tampoco podría
+        parar = true;
+        return callbacks.onError(ev.error);
+      }
+      // Cualquier otro fallo del servicio de Google (network, service-not-allowed, audio-capture,
+      // language-not-supported…): se pasa al reconocedor local en vez de quedarse sin voz.
+      console.warn('HandSync: el reconocimiento de Google falló (' + ev.error + '), se usa el reconocedor local');
+      r.onend = null;
+      escucharLocal(callbacks);
     };
     r.onend = () => {
       if (!parar && reconocedor === r) iniciarGoogle(callbacks, indiceIdioma); // sigue escuchando

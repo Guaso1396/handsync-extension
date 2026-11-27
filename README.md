@@ -39,7 +39,16 @@ Sección **"Señas con movimiento y palabras"** del panel. Sirve para J, Z, Ñ y
 ## Navegadores
 - **Chrome, Brave, Edge y Opera:** misma carpeta, se carga descomprimida. Si el navegador no tiene `sidePanel`, el ícono abre el panel en una ventana angosta.
 - **Firefox:** copiar la carpeta, renombrar `manifest.firefox.json` a `manifest.json` y cargarla en `about:debugging` → Este Firefox → Cargar complemento temporal. (Sin probar.)
-- **Voz → texto:** en Chrome usa el servicio de Google; si el navegador no lo tiene o lo bloquea (Brave, Firefox), usa el reconocedor **local** (Whisper, en `lib/modelos/`). Se puede forzar con `MOTOR_VOZ: 'local'` en `js/config.js`. Tiene un retraso de unos segundos y se equivoca más que el de Google.
+- **Voz → texto:** en Chrome usa el servicio de Google; en Brave, o si Google falla por cualquier motivo, usa el reconocedor **local** (Whisper, en `lib/modelos/`). Se puede forzar con `MOTOR_VOZ: 'local'` en `js/config.js`. Tiene un retraso de unos segundos por frase y se equivoca más que el de Google.
+- **Modelos de voz local:** `lib/modelos/whisper-base/` (calidad *Rápida*) viene incluido. `whisper-small` (calidad *Precisa*) pesa más de 100 MB y no cabe en GitHub: para usarlo, descarga los archivos de `Xenova/whisper-small` (los mismos que hay en `whisper-base/`) en `lib/modelos/whisper-small/`. Si no está, la extensión usa *Rápida* automáticamente.
+
+## Probar con Google Meet
+1. Abre la reunión de Meet **en una pestaña del navegador** (con audífonos, para que tu micrófono no repita la voz de los demás).
+2. Abre el panel de HandSync → **Voz → Señas** → **Escuchar la llamada**.
+3. En la ventana de compartir elige la pestaña **Meet**, activa **"Compartir audio de la pestaña"** y pulsa **Compartir**.
+4. Cuando alguien hable, el panel pasa a "Transcribiendo…" y en unos segundos aparece el texto y las señas.
+- **Escuchar** (sin "la llamada") solo oye tu micrófono, no a los demás.
+- Llamadas en las **aplicaciones de escritorio** de WhatsApp o Zoom no están en una pestaña: usa Zoom web / Meet, o elige "Pantalla completa" y marca "Compartir audio del sistema" (Windows).
 - Las muestras de señas se guardan por navegador: hay que importarlas en cada uno.
 
 ## Archivos

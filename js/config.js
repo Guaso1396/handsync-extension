@@ -68,7 +68,7 @@ const HS_CONFIG = {
   // Motor de voz → texto: 'auto' (Google si funciona; si no, el local), 'local' (siempre el local)
   MOTOR_VOZ: 'auto',
   // Calidad de la voz local: 'rapida' (más veloz, menos precisa) o 'precisa' (más lenta). Se cambia desde el panel.
-  CALIDAD_VOZ: 'precisa',
+  CALIDAD_VOZ: 'rapida', // 'rapida' viene incluida en GitHub; 'precisa' hay que agregarla aparte (ver README)
   MODELOS_VOZ: { rapida: 'whisper-base', precisa: 'whisper-small' }, // carpetas dentro de lib/modelos/
   VAD_UMBRAL: 0.012,                   // volumen mínimo para considerar que hay voz
   VAD_PAUSA_S: 0.6,                    // segundos de silencio que cierran una frase

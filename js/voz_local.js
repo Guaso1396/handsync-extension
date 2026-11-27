@@ -205,7 +205,15 @@ const HSVozLocal = (() => {
     }
     try {
       cb.onEstado('Cargando reconocedor de voz local (la primera vez tarda unos segundos)…');
-      await cargarModelo();
+      try {
+        await cargarModelo();
+      } catch (e) {
+        // El modelo "precisa" (whisper-small) no viene en GitHub: si falta, se usa el "rápido" (whisper-base).
+        if (calidad === 'rapida') throw e;
+        console.warn('HandSync voz local: no se pudo cargar ' + HS_CONFIG.MODELOS_VOZ[calidad] + ', se usa ' + HS_CONFIG.MODELOS_VOZ.rapida, e);
+        calidad = 'rapida';
+        await cargarModelo();
+      }
     } catch (e) {
       console.error('HandSync voz local: no se pudo cargar', e);
       liberarAudio();
