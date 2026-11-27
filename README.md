@@ -15,6 +15,8 @@ Panel lateral para videollamadas (Meet, Zoom web, WhatsApp Web):
 3. En la pestaña que se abre, **permitir cámara y micrófono**.
 4. Clic en el ícono de HandSync (si no aparece: 🧩 → 📌).
 
+**Letras y señas incluidas:** la primera vez que se abre el panel se cargan solas las letras (`datos/muestras_handsync.json`) y las señas con movimiento con sus videos (`datos/senas_movimiento_handsync.json`). Solo se cargan si ese navegador todavía no tiene letras o señas guardadas, así que nunca se reemplaza ni se duplica lo que ya hay. Para actualizar lo incluido, exporta de nuevo esos dos archivos y reemplázalos en `datos/`.
+
 **Recargar tras un cambio:** botón ⟳ de la extensión y volver a abrir el panel. **Depurar:** clic derecho en el panel → Inspeccionar.
 
 ## Enseñar las señas
@@ -55,6 +57,8 @@ Sección **"Señas con movimiento y palabras"** del panel. Sirve para J, Z, Ñ y
 | `js/cuerpo.js` | Manos (2), cuerpo y cara con MediaPipe; rasgos por fotograma y dibujo del esqueleto. |
 | `js/secuencias.js` | DTW, segmentador de gestos y reglas de texto (lógica pura, con pruebas). |
 | `js/biblioteca.js` | Señas con movimiento y sus videos en IndexedDB. |
+| `js/datos_iniciales.js` | La primera vez carga las letras y señas de `datos/` (solo si faltan). |
+| `datos/` | Letras y señas con movimiento (con videos) que vienen incluidas en la extensión. |
 | `sidepanel/` | Interfaz y orquestación. |
 | `lib/transformers/`, `lib/modelos/` | transformers.js 2.17.2 y modelo Whisper base (cuantizado), locales. |
 | `lib/mediapipe/` | `@mediapipe/tasks-vision` 0.10.14 y `hand_landmarker.task`, locales. |

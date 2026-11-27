@@ -478,6 +478,7 @@ async function iniciar() {
     HSVozLocal.fijarCalidad(e.target.value);
   });
   llenarLetras();
+  await HSDatosIniciales.cargarSiFaltan(); // letras y videos que vienen en datos/ (solo la primera vez)
   await HSMuestras.cargar();
   await HSBiblioteca.cargar();
   pintarCuenta();
