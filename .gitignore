@@ -1,8 +1,0 @@
-# Modelo de voz whisper-small (calidad "precisa"): pasa del límite de 100 MB de GitHub (157 MB).
-# Se agrega aparte; ver README. El modelo whisper-base (calidad "rápida") sí viene incluido.
-lib/modelos/whisper-small/
-
-# Sistema / editor
-.DS_Store
-Thumbs.db
-node_modules/
