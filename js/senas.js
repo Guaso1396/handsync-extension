@@ -325,95 +325,34 @@ const HSSenas = (() => {
     programar(callbacks);
   }
 
-  // ---------- Cámara que no se apaga sola ----------
-  // Si la cámara se interrumpe (otra aplicación la toma, Windows la reinicia, el panel se oculta),
-  // un vigilante la vuelve a abrir y reanuda la lectura. Solo se apaga con "Detener cámara".
-  let vigia = null, reconectando = false, cbsCamara = null;
-
-  async function abrirFlujo() {
-    const nuevo = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-    if (!video) { nuevo.getTracks().forEach((p) => p.stop()); return; } // se detuvo mientras abría
-    flujo = nuevo;
-    const pista = flujo.getVideoTracks()[0];
-    pista.onended = () => { if (corriendo && !reconectando) reconectar('la cámara se desconectó'); };
-    video.srcObject = flujo;
-    await video.play();
-  }
-
-  async function reconectar(motivo) {
-    reconectando = true;
-    console.warn('HandSync cámara: se reconecta (' + motivo + ')');
-    if (cbsCamara && cbsCamara.onCamara) cbsCamara.onCamara('reconectando');
-    if (flujo) flujo.getTracks().forEach((p) => { p.onended = null; p.stop(); });
-    for (let intento = 1; corriendo; intento++) {
-      try {
-        await abrirFlujo();
-        break;
-      } catch (e) {
-        console.warn('HandSync cámara: intento ' + intento + ' falló', e.name);
-        if (cbsCamara && cbsCamara.onCamara) cbsCamara.onCamara('ocupada', e);
-        await new Promise((r) => setTimeout(r, Math.min(5000, 1000 * intento)));
-      }
-    }
-    reconectando = false;
-    if (!corriendo) return;
-    if (cbsCamara && cbsCamara.onCamara) cbsCamara.onCamara('activa');
-    generacion++;
-    ultimoCiclo = 0;
-    ciclo(cbsCamara);
-  }
-
-  function vigilar() {
-    clearInterval(vigia);
-    vigia = setInterval(() => {
-      if (!corriendo || reconectando || document.hidden || !video) return;
-      const pista = flujo && flujo.getVideoTracks()[0];
-      if (!pista || pista.readyState === 'ended') return reconectar('la cámara terminó');
-      if (video.paused) video.play().catch(() => {});
-      if (performance.now() - ultimoCiclo > 2500) { // el ciclo se quedó quieto: se relanza
-        generacion++;
-        ultimoCiclo = 0;
-        ciclo(cbsCamara);
-      }
-    }, 1000);
-  }
-
   // Inicia cámara y reconocimiento. `contenedor` recibe el <video>.
   async function iniciar(contenedor, callbacks) {
     if (corriendo) return;
     await HSBiblioteca.cargar();
     await HSCuerpo.iniciar('VIDEO');
+    flujo = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
     video = document.createElement('video');
+    video.srcObject = flujo;
     video.muted = true;
     video.playsInline = true;
     video.setAttribute('aria-label', 'Vista de tu cámara');
-    try {
-      await abrirFlujo();
-    } catch (e) {
-      video = null;
-      throw e;
-    }
+    await video.play();
     contenedor.replaceChildren(video);
-    cbsCamara = callbacks;
     reiniciarEstado();
     segmentador = null; ultimosRasgos = null; bloqueadoHasta = 0; movActivo = false; energiasRecientes = [];
     ultimoPaso = 0; ultimoCiclo = 0; generacion++;
     corriendo = true;
     ciclo(callbacks);
-    vigilar();
   }
 
   // Detiene el reconocimiento y libera la cámara.
   function detener(contenedor) {
     corriendo = false;
-    clearInterval(vigia);
-    vigia = null;
-    cbsCamara = null;
     generacion++;
     captura = null;
     if (toma && toma.resolver) toma.resolver();
     toma = null;
-    if (flujo) flujo.getTracks().forEach((pista) => { pista.onended = null; pista.stop(); });
+    if (flujo) flujo.getTracks().forEach((pista) => pista.stop());
     flujo = null;
     video = null;
     if (contenedor) contenedor.replaceChildren();
