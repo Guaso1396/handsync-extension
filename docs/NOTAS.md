@@ -32,3 +32,11 @@
 1. `brave://extensions` o `chrome://extensions` → Modo de desarrollador → Cargar descomprimida → carpeta `handsync-extension/`.
 2. Después de cada cambio: botón ⟳ y volver a abrir el panel.
 3. Errores: clic derecho en el panel → Inspeccionar → Console (o F12 en la pestaña de importar).
+
+## v2 (2026-11-25): señas con movimiento, cuerpo y cara
+- Nuevo: `js/cuerpo.js` (manos×2 + Pose lite + Face con blendshapes), `js/secuencias.js` (DTW + segmentador), `js/biblioteca.js` (IndexedDB con videos). Modelos nuevos en `lib/mediapipe/`: `pose_landmarker_lite.task`, `face_landmarker.task`.
+- Cómo funciona: si hay señas con movimiento guardadas, un segmentador detecta cuándo las manos se mueven; al quedarse quietas compara el gesto con la biblioteca (DTW). Mientras hay movimiento no se agregan letras estáticas.
+- J, Z y Ñ ya no se reconocen como letra fija (se ignoran sus muestras estáticas). Se reconocen por movimiento y reemplazan N/I/D recién agregadas.
+- Letras parecidas: ángulos de dedos + margen mínimo entre letras ("N o M?").
+- **Sin probar con cámara real** (solo pruebas de lógica en Node). Pendiente de ajustar: `MOV_UMBRAL`, `DTW_DIST_MAX`, `DTW_MARGEN`, `MARGEN_ESTATICO`; rendimiento con 3 modelos (casillas Usar cuerpo/cara).
+- Pendiente: subtítulos sobre Meet; reconocer frases largas con varias palabras seguidas sin pausa.

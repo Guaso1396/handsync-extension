@@ -1,30 +1,102 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HandSync · Permisos</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #FFF7ED; color: #166534;
-           display: flex; justify-content: center; padding: 48px 16px; margin: 0; }
-    main { max-width: 480px; background: #F0FDF4; border: 2px solid #15803D;
-           border-radius: 16px; padding: 28px; }
-    h1 { margin-top: 0; color: #EA580C; }
-    button { background: #166534; color: #fff; border: 0; border-radius: 10px;
-             padding: 12px 20px; font-size: 1.05rem; font-weight: 700; cursor: pointer; }
-    button:focus-visible { outline: 3px solid #EA580C; outline-offset: 3px; }
-    #estado { margin-top: 18px; font-weight: 600; }
-    .error { color: #9A3412; }
-  </style>
+  <link rel="stylesheet" href="permisos.css">
 </head>
 <body>
-  <main>
-    <h1>Permisos de HandSync</h1>
-    <p>HandSync necesita tu <strong>cámara</strong> (para reconocer señas) y tu
-       <strong>micrófono</strong> (para transcribir voz). Todo se procesa en tu computador.</p>
-    <button id="btn-permitir" aria-label="Permitir acceso a cámara y micrófono">Permitir cámara y micrófono</button>
-    <p id="estado" role="status" aria-live="polite"></p>
-  </main>
+  <div class="app">
+
+    <!-- Encabezado: igual al panel lateral -->
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand__logo" src="../icons/logo-mano.svg" alt="" width="44" height="44">
+        <div>
+          <div class="brand__name">HandSync</div>
+          <div class="brand__tag">Señas y voz para tus videollamadas</div>
+        </div>
+      </div>
+      <div class="pill-local">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Local
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="card" aria-labelledby="titulo">
+
+        <div class="card__head">
+          <div class="eyebrow">Paso 1 de 1 · Configuración</div>
+          <h1 id="titulo" class="title">Activa tu cámara y tu micrófono</h1>
+          <p class="subtitle">HandSync los necesita para reconocer tus señas y transcribir la voz durante las videollamadas.</p>
+        </div>
+
+        <!-- Estado de cada permiso -->
+        <ul class="perms">
+          <li class="perm">
+            <div class="perm__icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3"/></svg>
+            </div>
+            <div class="perm__text">
+              <div class="perm__name">Cámara</div>
+              <div class="perm__desc">Para reconocer tus señas (Señas → Voz)</div>
+            </div>
+            <span class="badge badge--pending" id="estado-camara" data-state="prompt">Pendiente</span>
+          </li>
+          <li class="perm">
+            <div class="perm__icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg>
+            </div>
+            <div class="perm__text">
+              <div class="perm__name">Micrófono</div>
+              <div class="perm__desc">Para transcribir la voz (Voz → Señas)</div>
+            </div>
+            <span class="badge badge--pending" id="estado-microfono" data-state="prompt">Pendiente</span>
+          </li>
+        </ul>
+
+        <!-- Botón principal -->
+        <button type="button" class="btn btn--primary" id="btn-permitir">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span id="btn-permitir-texto">Permitir cámara y micrófono</span>
+        </button>
+
+        <!-- Mensaje de éxito -->
+        <div class="alert alert--ok" id="msg-ok" role="status" hidden>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+          <div>
+            <div class="alert__title">¡Listo! Todo está configurado</div>
+            <div class="alert__text">Ya puedes cerrar esta pestaña y abrir HandSync desde el ícono de extensiones de Chrome.</div>
+            <button type="button" class="btn btn--ghost btn--small" id="btn-cerrar">Cerrar esta pestaña</button>
+          </div>
+        </div>
+
+        <!-- Mensaje de error (bloqueado, sin dispositivo, en uso) -->
+        <div class="alert alert--error" id="msg-error" role="alert" hidden>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 17h.01"/></svg>
+          <div>
+            <div class="alert__title" id="msg-error-titulo">La cámara está bloqueada</div>
+            <div class="alert__text" id="msg-error-texto"></div>
+            <ol class="steps" id="pasos-desbloqueo" hidden>
+              <li>Haz clic en el <strong>ícono de ajustes</strong> a la izquierda de la dirección, arriba.</li>
+              <li>Cambia <strong>Cámara</strong> y <strong>Micrófono</strong> a «Permitir».</li>
+              <li>Vuelve aquí y pulsa <strong>Reintentar</strong>.</li>
+            </ol>
+            <button type="button" class="btn btn--ghost btn--small" id="btn-ajustes" hidden>Abrir ajustes de Chrome</button>
+          </div>
+        </div>
+
+        <footer class="privacy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <span>Todo se procesa en tu computador. HandSync no graba ni envía tu video o tu voz a internet.</span>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <!-- En las extensiones (Manifest V3) no se permiten scripts en línea: el JS va en un archivo aparte -->
   <script src="permisos.js"></script>
 </body>
 </html>

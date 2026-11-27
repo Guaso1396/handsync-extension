@@ -4,6 +4,11 @@ const $ = (id) => document.getElementById(id);
 let textoArmado = '';
 let camaraActiva = false;
 let escuchando = false;
+let ultimaLetra = null;   // { letra, t } de la última letra agregada (para reemplazar N por Ñ)
+let urlSena = null;       // URL del video de la seña mostrada (se libera al cambiar)
+let urlsTarjetas = [];    // URLs de videos de las tarjetas de Voz → Señas
+let grabando = false;
+let capaEsqueleto = null; // <canvas> sobre el video
 
 // ---------- Estado y errores ----------
 
@@ -37,17 +42,86 @@ function pintarTexto() {
 }
 
 // Agrega una letra (o espacio) al texto armado.
-function agregarLetra(letra) {
+function agregarLetra(letra, t) {
   textoArmado += letra;
+  ultimaLetra = letra === ' ' ? null : { letra, t: t != null ? t : performance.now() };
   pintarTexto();
+  revisarPalabra();
+}
+
+// Si la última palabra del texto tiene seña guardada, muestra su video; si no, lo oculta.
+function revisarPalabra() {
+  const p = HSSecuencias.ultimaPalabra(textoArmado);
+  if (p.length > 1 && HSBiblioteca.videoDe(p)) mostrarSena(p, 'Seña de ');
+  else mostrarSena(null);
+}
+
+// Muestra (o oculta) la tarjeta con el video de una seña.
+function mostrarSena(etiqueta, prefijo) {
+  const caja = $('sena-palabra');
+  if (urlSena) { URL.revokeObjectURL(urlSena); urlSena = null; }
+  const blob = etiqueta ? HSBiblioteca.videoDe(etiqueta) : null;
+  if (!blob) { caja.hidden = true; caja.replaceChildren(); return; }
+  urlSena = URL.createObjectURL(blob);
+  const v = document.createElement('video');
+  v.src = urlSena; v.loop = true; v.muted = true; v.autoplay = true; v.playsInline = true;
+  v.setAttribute('aria-label', 'Video de la seña ' + etiqueta);
+  caja.replaceChildren(document.createTextNode((prefijo || '') + etiqueta), v);
+  caja.hidden = false;
+}
+
+// Se reconoció una seña con movimiento (palabra).
+function alSenaMovimiento(r) {
+  if (r.tipo === 'letra') {
+    textoArmado = HSSecuencias.aplicarLetraDinamica(
+      textoArmado, r.etiqueta, r.t, ultimaLetra, HS_CONFIG.BASE_DINAMICA, HS_CONFIG.VENTANA_REEMPLAZO_MS);
+    ultimaLetra = { letra: r.etiqueta, t: r.t };
+    pintarTexto();
+    revisarPalabra();
+  } else {
+    if (textoArmado && !textoArmado.endsWith(' ')) textoArmado += ' ';
+    textoArmado += r.etiqueta + ' ';
+    ultimaLetra = null;
+    pintarTexto();
+    mostrarSena(r.etiqueta, 'Seña de ');
+  }
+}
+
+// Cada gesto con movimiento que termina: si no se aceptó, explica por qué en el panel
+// (antes solo quedaba en la consola y parecía que la extensión no hacía nada).
+function avisarGesto(g) {
+  if (g.aceptado) { mostrarEstado(''); return; }
+  const max = HS_CONFIG.DTW_DIST_MAX;
+  // Si solo hay videos importados, el mejor arreglo es grabar tomas propias.
+  const consejo = HSBiblioteca.hayPropias() ? ''
+    : ' Consejo: graba 3 tomas tuyas de cada palabra con "Grabar toma" (pestaña Enseñar).';
+  if (g.dist > max) {
+    mostrarEstado('No reconocí la seña. Lo más parecido fue "' + g.etiqueta + '" (diferencia ' +
+      g.dist.toFixed(2) + '; se acepta hasta ' + max + '). Hazla otra vez.' + consejo, 'info');
+  } else {
+    mostrarEstado('Dudé entre "' + g.etiqueta + '" y otra seña muy parecida. Hazla otra vez más marcada.' + consejo, 'info');
+  }
 }
 
 // Actualiza letra grande y barras con cada lectura del modelo.
 function pintarPrediccion(r) {
   if (r.sinMuestras) mostrarEstado('Aún no hay señas guardadas. Usa "Enseñar señas" o "Importar fotos".', 'info');
-  $('letra').textContent = r.prob >= HS_CONFIG.UMBRAL_CONFIANZA && r.letra !== HS_CONFIG.CLASE_VACIA ? r.letra : '—';
+  const caja = $('letra');
+  caja.classList.toggle('duda', !!r.duda);
+  if (r.duda) caja.textContent = r.duda;
+  else caja.textContent = r.prob >= HS_CONFIG.UMBRAL_CONFIANZA && r.letra !== HS_CONFIG.CLASE_VACIA ? r.letra : '—';
   $('confianza').value = Math.round(r.prob * 100);
   $('estabilidad').value = Math.round(r.progreso * 100);
+  $('pct-confianza').textContent = Math.round(r.prob * 100) + ' %';
+  $('pct-estabilidad').textContent = Math.round(r.progreso * 100) + ' %';
+}
+
+// Indicador "Cámara activa / apagada" de la tarjeta Señas → Voz.
+function pintarEstadoCamara(activa) {
+  const caja = $('estado-camara');
+  caja.classList.toggle('on', activa);
+  caja.querySelector('span').textContent = activa ? 'Cámara activa' : 'Cámara apagada';
+  if (!activa) $('chip-mano').hidden = true;
 }
 
 // Traduce un error de cámara/modelo a un mensaje en español.
@@ -71,25 +145,60 @@ async function alternarCamara() {
   const btn = $('btn-camara');
   if (camaraActiva) {
     HSSenas.detener($('video'));
+    capaEsqueleto = null;
+    $('mov').hidden = true;
+    $('chk-cuerpo').disabled = false;
+    $('chk-cara').disabled = false;
     camaraActiva = false;
     btn.textContent = 'Iniciar cámara';
     btn.setAttribute('aria-label', 'Iniciar cámara');
     btn.classList.remove('activo');
+    pintarEstadoCamara(false);
     pintarPrediccion({ letra: '—', prob: 0, progreso: 0 });
     return;
   }
   mostrarEstado('Cargando modelo y cámara…');
   try {
-    await HSSenas.iniciar($('video'), { onPrediccion: pintarPrediccion, onLetra: agregarLetra });
+    HSCuerpo.fijarAjustes({ cuerpo: $('chk-cuerpo').checked, cara: $('chk-cara').checked });
+    await HSSenas.iniciar($('video'), {
+      onPrediccion: pintarPrediccion,
+      onLetra: agregarLetra,
+      onSenaMovimiento: alSenaMovimiento,
+      onGesto: avisarGesto,
+      onLectura: (lec) => {
+        if (capaEsqueleto) HSCuerpo.dibujar(capaEsqueleto, lec);
+        $('chip-mano').hidden = !(lec && lec.manos && lec.manos.length);
+      },
+      onMov: (activo) => { $('mov').hidden = !activo; }
+    });
+    ponerCapa();
+    $('chk-cuerpo').disabled = true;
+    $('chk-cara').disabled = true;
     camaraActiva = true;
     btn.textContent = 'Detener cámara';
     btn.setAttribute('aria-label', 'Detener cámara');
     btn.classList.add('activo');
+    pintarEstadoCamara(true);
     mostrarEstado('');
     ofrecerPermisos(false);
   } catch (e) {
     mostrarEstado(mensajeErrorCamara(e), 'error');
   }
+}
+
+// Envuelve el video con un canvas donde se dibuja el esqueleto (manos, cuerpo y cara).
+function ponerCapa() {
+  const v = $('video').querySelector('video');
+  if (!v) return;
+  const envoltura = document.createElement('div');
+  envoltura.className = 'vwrap';
+  capaEsqueleto = document.createElement('canvas');
+  capaEsqueleto.className = 'capa';
+  capaEsqueleto.width = v.videoWidth || 640;
+  capaEsqueleto.height = v.videoHeight || 480;
+  capaEsqueleto.setAttribute('aria-hidden', 'true');
+  v.replaceWith(envoltura);
+  envoltura.append(v, capaEsqueleto);
 }
 
 // Lee el texto en voz alta.
@@ -105,8 +214,8 @@ async function copiarTexto() {
   try {
     await navigator.clipboard.writeText(textoArmado);
     const btn = $('btn-copiar');
-    btn.textContent = '✔ ¡Copiado!';
-    setTimeout(() => { btn.textContent = '📋 Copiar'; }, 2000);
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => { btn.textContent = 'Copiar'; }, 2000);
     mostrarEstado('');
   } catch {
     mostrarEstado('No se pudo copiar al portapapeles.', 'error');
@@ -117,7 +226,12 @@ async function copiarTexto() {
 
 // Llena la lista de letras.
 function llenarLetras() {
-  $('sel-letra').replaceChildren(...HS_CONFIG.LETRAS.map((l) => new Option(l, l)));
+  // "Nada": poses que NO son señas (mano en la cara, rascarse, sostener el celular…). Al enseñarlas,
+  // el reconocedor aprende a ignorarlas en lugar de convertirlas en letras.
+  $('sel-letra').replaceChildren(
+    ...HS_CONFIG.LETRAS.map((l) => new Option(l, l)),
+    new Option('Nada (no es seña)', HS_CONFIG.CLASE_VACIA)
+  );
 }
 
 // Muestra cuántas muestras tiene la letra elegida.
@@ -132,13 +246,16 @@ async function capturarLetra() {
   const letra = $('sel-letra').value;
   const btn = $('btn-capturar');
   btn.disabled = true;
-  mostrarEstado('Haz la seña de la ' + letra + ' y mantén la mano visible…');
+  const esNada = letra === HS_CONFIG.CLASE_VACIA;
+  mostrarEstado(esNada
+    ? 'Haz gestos que NO son señas (tocarte la cara, rascarte, apoyar la mano…) y muévela un poco…'
+    : 'Haz la seña de la ' + letra + ' y mantén la mano visible…');
   await HSSenas.capturar(letra, HS_CONFIG.MUESTRAS_POR_CAPTURA, (hechas, total) => {
     btn.textContent = 'Capturando ' + hechas + '/' + total;
   });
   btn.disabled = false;
   btn.textContent = 'Capturar';
-  mostrarEstado('¡Listo! Muestras guardadas para la ' + letra + '.');
+  mostrarEstado(esNada ? '¡Listo! Ahora esos gestos se ignoran.' : '¡Listo! Muestras guardadas para la ' + letra + '.');
   pintarCuenta();
 }
 
@@ -148,6 +265,88 @@ async function borrarMuestras() {
   await HSMuestras.borrarLetra(letra);
   pintarCuenta();
   mostrarEstado('Se borraron las muestras de la ' + letra + '.');
+}
+
+// ---------- Señas con movimiento y palabras ----------
+
+// Dibuja la lista de señas guardadas.
+function pintarListaMov() {
+  const lista = HSBiblioteca.resumen();
+  if (!lista.length) {
+    const li = document.createElement('li');
+    li.textContent = 'Aún no hay señas con movimiento guardadas.';
+    li.style.fontWeight = '400';
+    return $('mov-lista').replaceChildren(li);
+  }
+  $('mov-lista').replaceChildren(...lista.map((s) => {
+    const li = document.createElement('li');
+    const nombre = document.createElement('span');
+    nombre.className = 'nombre';
+    nombre.textContent = s.etiqueta + ' ';
+    const tomas = document.createElement('span');
+    tomas.className = 'tomas';
+    tomas.textContent = '(' + s.tomas + (s.tomas === 1 ? ' toma' : ' tomas') + ')';
+    nombre.append(tomas);
+    li.append(nombre);
+    if (HSBiblioteca.videoDe(s.etiqueta)) {
+      const ver = document.createElement('button');
+      ver.className = 'secundario ico ico-ver';
+      ver.textContent = '';
+      ver.setAttribute('aria-label', 'Ver el video de ' + s.etiqueta);
+      ver.addEventListener('click', () => mostrarSena(s.etiqueta, 'Seña de '));
+      li.append(ver);
+    }
+    const borrar = document.createElement('button');
+    borrar.className = 'secundario ico ico-papelera';
+    borrar.textContent = '';
+    borrar.setAttribute('aria-label', 'Borrar la seña ' + s.etiqueta);
+    borrar.addEventListener('click', async () => {
+      if (!confirm('¿Borrar todas las tomas de ' + s.etiqueta + '?')) return;
+      await HSBiblioteca.borrarEtiqueta(s.etiqueta);
+      HSSenas.reiniciarMovimiento();
+      pintarListaMov();
+      revisarPalabra();
+    });
+    li.append(borrar);
+    return li;
+  }));
+}
+
+const MOTIVOS_TOMA = {
+  'sin-camara': 'Primero enciende la cámara.',
+  'ocupado': 'Espera a que termine la captura actual.',
+  'sin-mano': 'No se vio ninguna mano durante la toma. Colócate frente a la cámara y repite.',
+  'sin-movimiento': 'No se detectó movimiento. Haz la seña con más amplitud o baja MOV_UMBRAL en js/config.js.'
+};
+
+// Graba una toma de la seña escrita.
+async function grabarSena() {
+  if (grabando) return;
+  if (!camaraActiva) return mostrarEstado('Primero enciende la cámara.', 'error');
+  const etiqueta = HSVoz.normalizar($('mov-etiqueta').value);
+  if (!etiqueta) return mostrarEstado('Escribe el nombre de la seña (por ejemplo HOLA).', 'error');
+  if (etiqueta.length === 1 && !HS_CONFIG.LETRAS_DINAMICAS.includes(etiqueta)) {
+    return mostrarEstado('Las letras se enseñan como foto en "Enseñar señas" (elige la letra y pulsa Capturar). Aquí solo van palabras.', 'error');
+  }
+  const tipo = etiqueta.length === 1 ? 'letra' : 'palabra';
+  const btn = $('btn-grabar');
+  const info = $('mov-estado');
+  grabando = true;
+  btn.disabled = true;
+  mostrarEstado('');
+  const r = await HSSenas.grabarToma(etiqueta, tipo, {
+    onCuenta: (s) => { info.textContent = s > 0 ? 'Prepárate… ' + s : '● Grabando: haz la seña'; },
+    onProgreso: (ms) => { info.textContent = '● Grabando: ' + (ms / 1000).toFixed(1) + ' s'; }
+  });
+  grabando = false;
+  btn.disabled = false;
+  if (r.ok) {
+    info.textContent = '¡Listo! Toma de ' + etiqueta + ' guardada. Repite 3 a 5 veces para que la reconozca mejor.';
+  } else {
+    info.textContent = '';
+    mostrarEstado(MOTIVOS_TOMA[r.motivo] || 'No se pudo guardar la toma.', 'error');
+  }
+  pintarListaMov();
 }
 
 // ---------- Voz → Señas ----------
@@ -177,16 +376,39 @@ function crearTarjeta(letra) {
 
 // Muestra una tarjeta por letra del texto normalizado.
 function pintarTarjetas(texto) {
+  urlsTarjetas.forEach((u) => URL.revokeObjectURL(u));
+  urlsTarjetas = [];
   const normal = HSVoz.normalizar(texto);
-  const nodos = [...normal].map((c) => {
-    if (c === ' ') {
+  const nodos = [];
+  normal.split(' ').filter(Boolean).forEach((palabra, i) => {
+    if (i > 0) {
       const sep = document.createElement('div');
       sep.className = 'separador';
-      return sep;
+      nodos.push(sep);
     }
-    return crearTarjeta(c);
+    // Palabra con seña guardada: un solo video. Si no, una tarjeta por letra.
+    if (palabra.length > 1 && tarjetaVideo(palabra, nodos, true)) return;
+    for (const c of palabra) {
+      if (!tarjetaVideo(c, nodos, false)) nodos.push(crearTarjeta(c));
+    }
   });
   $('tarjetas').replaceChildren(...nodos);
+}
+
+// Agrega a `nodos` una tarjeta con el video de la seña `etiqueta`. Devuelve false si no hay video.
+function tarjetaVideo(etiqueta, nodos, ancha) {
+  const blob = HSBiblioteca.videoDe(etiqueta);
+  if (!blob) return false;
+  const url = URL.createObjectURL(blob);
+  urlsTarjetas.push(url);
+  const tarjeta = document.createElement('div');
+  tarjeta.className = 'tarjeta' + (ancha ? ' tarjeta-palabra' : '');
+  const v = document.createElement('video');
+  v.src = url; v.loop = true; v.muted = true; v.autoplay = true; v.playsInline = true;
+  v.setAttribute('aria-label', 'Video de la seña ' + etiqueta);
+  tarjeta.append(v, document.createTextNode(etiqueta));
+  nodos.push(tarjeta);
+  return true;
 }
 
 // Mensajes de error del reconocimiento de voz.
@@ -209,10 +431,10 @@ function alternarEscucha(origen) {
   const llamada = origen === 'pestana';
   const btn = $(llamada ? 'btn-llamada' : 'btn-escuchar');
   const otro = $(llamada ? 'btn-escuchar' : 'btn-llamada');
-  const textoInicial = llamada ? '🔊 Escuchar la llamada' : '🎤 Escuchar';
+  const textoInicial = llamada ? 'Escuchar la llamada' : 'Escuchar';
   if (escuchando) return HSVoz.detenerEscucha();
   escuchando = true;
-  btn.textContent = '⏹ Detener';
+  btn.textContent = 'Detener';
   btn.classList.add('activo');
   otro.disabled = true;
   mostrarEstado('');
@@ -237,8 +459,8 @@ function alternarEscucha(origen) {
 async function iniciar() {
   $('btn-camara').addEventListener('click', alternarCamara);
   $('btn-espacio').addEventListener('click', () => agregarLetra(' '));
-  $('btn-borrar').addEventListener('click', () => { textoArmado = textoArmado.slice(0, -1); pintarTexto(); });
-  $('btn-limpiar').addEventListener('click', () => { textoArmado = ''; pintarTexto(); });
+  $('btn-borrar').addEventListener('click', () => { textoArmado = textoArmado.slice(0, -1); ultimaLetra = null; pintarTexto(); revisarPalabra(); });
+  $('btn-limpiar').addEventListener('click', () => { textoArmado = ''; ultimaLetra = null; pintarTexto(); revisarPalabra(); });
   $('btn-hablar').addEventListener('click', hablarTexto);
   $('btn-copiar').addEventListener('click', copiarTexto);
   $('btn-escuchar').addEventListener('click', () => alternarEscucha('microfono'));
@@ -257,7 +479,23 @@ async function iniciar() {
   });
   llenarLetras();
   await HSMuestras.cargar();
+  await HSBiblioteca.cargar();
   pintarCuenta();
+  pintarListaMov();
+  $('btn-grabar').addEventListener('click', grabarSena);
+  $('btn-importar-videos').addEventListener('click', () =>
+    chrome.tabs.create({ url: chrome.runtime.getURL(HS_CONFIG.RUTA_IMPORTAR) }));
+  const { hs_ajustes: aj } = await chrome.storage.local.get('hs_ajustes');
+  if (aj) { $('chk-cuerpo').checked = !!aj.cuerpo; $('chk-cara').checked = !!aj.cara; }
+  const guardarAjustes = () => chrome.storage.local.set({ hs_ajustes: { cuerpo: $('chk-cuerpo').checked, cara: $('chk-cara').checked } });
+  $('chk-cuerpo').addEventListener('change', guardarAjustes);
+  $('chk-cara').addEventListener('change', guardarAjustes);
+  // La página de importar avisa cuando agrega señas: recargar la biblioteca.
+  new BroadcastChannel('handsync').onmessage = async () => {
+    await HSBiblioteca.cargar();
+    HSSenas.reiniciarMovimiento();
+    pintarListaMov();
+  };
   chrome.storage.onChanged.addListener(pintarCuenta);
   $('respaldo').addEventListener('input', (e) => pintarTarjetas(e.target.value));
   $('btn-permisos').addEventListener('click', () =>

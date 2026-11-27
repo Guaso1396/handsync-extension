@@ -1,0 +1,291 @@
+/* HandSync · Página de permisos (modelo A)
+   Colores tomados del panel lateral. Sin fuentes externas: todo carga local. */
+
+:root {
+  --bg: #121417;
+  --card: #1b1e22;
+  --card-2: #23272c;
+  --border: #2c3137;
+  --border-2: #33383f;
+  --text: #f3f4f6;
+  --muted: #a1a7b0;
+  --muted-2: #b4bac3;
+  --mint: #34d399;
+  --mint-text: #6ee7b7;
+  --mint-bg: #1a3a2e;
+  --green: #238636;
+  --green-hover: #2ea043;
+  --ok-bg: #10291f;
+  --ok-border: #1f5a41;
+  --warn-bg: #3a2a12;
+  --warn-text: #fbbf24;
+  --err-bg: #3a1418;
+  --err-border: #b4232a;
+  --err-text: #fecaca;
+  --radius: 14px;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Encabezado ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 32px;
+  border-bottom: 1px solid #262a30;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.brand__name { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.brand__tag  { font-size: 13px; color: var(--muted); }
+
+.pill-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+/* ---------- Tarjeta ---------- */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: entrar .35s ease-out;
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.card__head { display: flex; flex-direction: column; gap: 10px; }
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mint-text);
+}
+
+.title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted-2);
+}
+
+/* ---------- Filas de permisos ---------- */
+.perms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perm {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--card-2);
+  border: 1px solid #30353c;
+  border-radius: var(--radius);
+}
+
+.perm__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--mint-bg);
+  color: var(--mint-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perm__text { flex: 1; min-width: 0; }
+.perm__name { font-size: 15px; font-weight: 700; }
+.perm__desc { font-size: 13px; color: var(--muted); }
+
+/* Etiquetas de estado */
+.badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge--pending { background: var(--warn-bg); color: var(--warn-text); }
+.badge--ok      { background: #143326; color: var(--mint-text); }
+.badge--error   { background: var(--err-bg); color: #fca5a5; }
+
+/* ---------- Botones ---------- */
+.btn {
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: var(--radius);
+  transition: background .15s, transform .05s, opacity .15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 3px solid var(--mint); outline-offset: 2px; }
+.btn[disabled] { opacity: .65; cursor: progress; }
+
+.btn--primary {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  background: var(--green);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+.btn--primary:hover:not([disabled]) { background: var(--green-hover); }
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid #3a4048;
+  color: var(--text);
+  font-weight: 700;
+}
+.btn--ghost:hover { background: #262a30; }
+
+.btn--small {
+  margin-top: 12px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+/* Spinner mientras Chrome pregunta */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar .8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ---------- Mensajes ---------- */
+.alert {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--radius);
+}
+.alert > svg { flex-shrink: 0; margin-top: 2px; }
+.alert__title { font-size: 15px; font-weight: 700; }
+.alert__text  { margin-top: 4px; font-size: 14px; line-height: 1.5; }
+
+.alert--ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--mint-text); }
+.alert--ok .alert__title { color: #d1fae5; }
+.alert--ok .alert__text  { color: #a7d8c2; }
+
+.alert--error { background: var(--err-bg); border: 1px solid var(--err-border); color: #fca5a5; }
+.alert--error .alert__title { color: #fff; }
+.alert--error .alert__text  { color: var(--err-text); }
+
+.steps {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--err-text);
+}
+.steps strong { color: #fff; }
+
+/* ---------- Pie de privacidad ---------- */
+.privacy {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.privacy svg { flex-shrink: 0; margin-top: 2px; }
+
+[hidden] { display: none !important; }
+
+/* ---------- Pantallas pequeñas ---------- */
+@media (max-width: 520px) {
+  .topbar { padding: 16px 20px; }
+  .card   { padding: 24px; }
+  .title  { font-size: 25px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .spinner { animation: none; }
+}
